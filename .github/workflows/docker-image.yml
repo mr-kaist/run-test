@@ -38,7 +38,7 @@ jobs:
       run: aws ecr put-lifecycle-policy \
             --repository-name $ECR_REPOSITORY \
             --lifecycle-policy-text "file://.github/policy.json"
-      if: job.steps.create-repo.status == failure()
+      if: job.steps.create-repo.status != failure()
           
       
     - name: Build the Docker image
