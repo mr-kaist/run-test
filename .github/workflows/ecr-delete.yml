@@ -1,0 +1,38 @@
+name: Docker Image CI
+
+on:
+  workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ECR_PRIVATE_ACCESS_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_ECR_PRIVATE_SECRET_KEY }}
+        aws-region: ap-northeast-2
+        
+    - name: Login to AWS ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+    
+    - name: Get repository name
+      run: echo "REPO_NAME=$(echo ${{ github.repository }} | awk -F '/' '{print $2}')" >> $GITHUB_ENV
+
+    - name: Delete ECR repository
+      run: aws ecr delete-repository --repository-name $REPO_NAME --force
+    
+    - name: action-slack
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        author_name: ECR Cleanup Notification
+        fields: repo
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      if: always()
