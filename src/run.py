@@ -1,0 +1,27 @@
+from flask import Flask, request, make_response
+
+import json
+
+app = Flask(__name__)
+
+@app.route('/', methods=["GET", "POST"])
+def echo():
+    resp = {
+        "args": {},
+        "headers": {},
+        "body": None
+    }
+
+    for k, v in request.args.items():
+        resp["args"][k] = v
+    
+    for k, v in request.headers.items():
+        resp["headers"][k] = v
+
+    resp["body"] = request.data.decode("utf-8")
+
+    return make_response(resp)
+
+
+if __name__ == '__main__':
+    app.run(threaded=True)
