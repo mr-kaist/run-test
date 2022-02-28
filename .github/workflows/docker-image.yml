@@ -27,6 +27,11 @@ jobs:
     - name: Login to AWS ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
+    
+    - name: Create repository if not exists
+      run: |
+        aws ecr describe-repositories --repository-names ${REPO_NAME}
+        aws ecr create-repository --repository-name ${REPO_NAME}
       
     - name: Build the Docker image
       id: build-image
@@ -35,8 +40,8 @@ jobs:
         IMAGE_TAG: ${{ github.sha }}
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY .
-        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY
+        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY"
     
     - name: action-slack
       uses: 8398a7/action-slack@v3
