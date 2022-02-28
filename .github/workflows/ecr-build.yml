@@ -22,8 +22,7 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v1
 
     - name: Get repository name
-      run: echo ::set-env name=REPO_NAME::$(echo ${{ github.repository }} | awk -F '/' '{print $2}')
-      shell: bash
+      run: echo "REPO_NAME=$(echo ${{ github.repository }} | awk -F '/' '{print $2}')" >> $GITHUB_ENV
     
     - name: Create ECR repository
       id: create-repo
