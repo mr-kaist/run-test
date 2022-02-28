@@ -25,10 +25,9 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v1
 
     - name: Delete ECR repository
-      run: aws delete-repository \
+      run: aws ecr delete-repository \
         --repository-name $ECR_REPOSITORY \
         --force
-      continue-on-error: true
     
     - name: action-slack
       uses: 8398a7/action-slack@v3
