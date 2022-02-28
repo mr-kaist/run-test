@@ -1,0 +1,57 @@
+name: ECR Builds Workflow
+
+on:
+  workflow_dispatch
+
+env:
+  REPO_NAME: ${{ github.event.inputs.repoName }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ECR_PRIVATE_ACCESS_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_ECR_PRIVATE_SECRET_KEY }}
+        aws-region: ap-northeast-2
+        
+    - name: Login to AWS ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+    
+    - name: Create ECR repository
+      id: create-repo
+      run: aws ecr create-repository --repository-name $REPO_NAME
+      continue-on-error: true
+
+    - name: Set repository lifecycle [Keep one image]
+      run: aws ecr put-lifecycle-policy \
+            --repository-name $REPO_NAME \
+            --lifecycle-policy-text "https://mr-kaist.github.io/.github/workflow-templates/policy.json"
+      if: job.steps.create-repo.status != failure()
+      
+    - name: Build the Docker image
+      id: build-image
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
+      run: |
+        docker build -t $ECR_REGISTRY/$ECR_REPOSITORY .
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY
+        echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY"
+    
+    - name: action-slack
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        author_name: ECR Push Notification
+        fields: repo,commit,message,author,took
+        text: 'Image tag: ${{ steps.build-image.outputs.image }}'
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      if: always()
