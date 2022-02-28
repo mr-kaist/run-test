@@ -29,11 +29,16 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v1
     
     - name: Create ECR repository
+      id: create-repo
       run: |
         aws ecr create-repository --repository-name $ECR_REPOSITORY
-        aws ecr put-lifecycle-policy \
-          --repository-name $ECR_REPOSITORY \
-          --lifecycle-policy-text "file://.github/policy.json"
+      continue-on-error: true
+
+    - name: Set repository lifecycle
+      run: aws ecr put-lifecycle-policy \
+            --repository-name $ECR_REPOSITORY \
+            --lifecycle-policy-text "file://.github/policy.json"
+      if: job.steps.create-repo.status == failure()
           
       
     - name: Build the Docker image
