@@ -7,7 +7,6 @@ on:
     branches: [ main ]
 
 env:
-  AWS_REGION: ap-northeast-2
   ECR_REPOSITORY: ${{ github.event.repository.name }}
 
 jobs:
@@ -22,7 +21,7 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.AWS_ECR_PRIVATE_ACCESS_ID }}
         aws-secret-access-key: ${{ secrets.AWS_ECR_PRIVATE_SECRET_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
+        aws-region: ap-northeast-2
         
     - name: Login to AWS ECR
       id: login-ecr
@@ -39,7 +38,6 @@ jobs:
             --repository-name $ECR_REPOSITORY \
             --lifecycle-policy-text "file://.github/policy.json"
       if: job.steps.create-repo.status != failure()
-          
       
     - name: Build the Docker image
       id: build-image
@@ -55,6 +53,7 @@ jobs:
       uses: 8398a7/action-slack@v3
       with:
         status: ${{ job.status }}
+        author_name: ECR Push Notification
         fields: repo,commit,message,author,took
         text: 'Image tag expires in 1 day: ${{ steps.build-image.outputs.image }}'
       env:
