@@ -8,7 +8,7 @@ on:
 
 env:
   AWS_REGION: ap-northeast-2
-  ECR_REPOSITORY: mr-private
+  ECR_REPOSITORY: ${{ github.event.repository.name }}
 
 jobs:
   build:
@@ -28,10 +28,13 @@ jobs:
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
     
-    - name: Create repository if not exists
+    - name: Create ECR repository
       run: |
-        aws ecr describe-repositories --repository-names ${REPO_NAME}
-        aws ecr create-repository --repository-name ${REPO_NAME}
+        aws ecr create-repository --repository-name $ECR_REPOSITORY
+        aws ecr put-lifecycle-policy \
+          --repository-name $ECR_REPOSITORY \
+          --lifecycle-policy-text "file://.github/policy.json"
+          
       
     - name: Build the Docker image
       id: build-image
