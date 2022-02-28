@@ -1,4 +1,4 @@
-name: Docker Image CI
+name: ECR Cleanup Workflow
 
 on:
   workflow_dispatch

@@ -28,20 +28,15 @@ jobs:
       id: create-repo
       run: aws ecr create-repository --repository-name $REPO_NAME
       continue-on-error: true
-
-    - name: Set repository lifecycle [Keep one image]
-      run: aws ecr put-lifecycle-policy \
-            --repository-name $REPO_NAME \
-            --lifecycle-policy-text "https://mr-kaist.github.io/.github/workflow-templates/policy.json"
-      if: job.steps.create-repo.status != failure()
       
     - name: Build the Docker image
       id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        IMAGE_TAG: ${{ github.sha }}
       run: |
-        docker build -t $ECR_REGISTRY/$REPO_NAME .
-        docker push $ECR_REGISTRY/$REPO_NAME
+        docker build -t $ECR_REGISTRY/$REPO_NAME:latest .
+        docker push $ECR_REGISTRY/$REPO_NAME:latest
         echo "::set-output name=image::$ECR_REGISTRY/$REPO_NAME:latest"
     
     - name: action-slack
